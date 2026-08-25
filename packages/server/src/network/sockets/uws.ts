@@ -16,7 +16,7 @@ export default class UWS extends WebSocket {
     public constructor(socketHandler: SocketHandler) {
         super(config.host, config.port, socketHandler);
 
-        App({})
+        (App({}) as any)
             .get('/*', this.httpResponse.bind(this))
             .ws('/*', {
                 compression: DISABLED,
@@ -35,10 +35,6 @@ export default class UWS extends WebSocket {
             });
     }
 
-    /**
-     * Upgrades the HTTP connection to a WebSocket connection. We use this
-     * to extract the reverse proxy IP address through the headers.
-     */
     private handleUpgrade(
         response: HttpResponse,
         request: HttpRequest,
@@ -56,11 +52,6 @@ export default class UWS extends WebSocket {
         );
     }
 
-    /**
-     * Handles the creation and organizing of a socket. With UWS we store the instance
-     * into the socket's user data so that we can identify the socket later on.
-     * @param socket The socket that the connection will be created for.
-     */
     private handleConnection(socket: WS<ConnectionInfo>): void {
         let instance = Utils.createInstance(Modules.EntityType.Player),
             connection = new Connection(instance, socket as HeaderWebSocket);
@@ -70,32 +61,21 @@ export default class UWS extends WebSocket {
         this.addCallback?.(connection);
     }
 
-    /**
-     * Responsible for converting the buffer into a string and then parsing it into JSON.
-     * @param socket The socket that the message was received from (used to identify the connection).
-     * @param data Contains buffer data that we convert into a string.
-     */
     private handleMessage(socket: WS<ConnectionInfo>, data: ArrayBuffer): void {
         let connection = this.socketHandler.get(socket.getUserData().instance);
 
-        // Prevent the server from crashing if the connection is not found.
         if (!connection)
             return log.error(`No connection found for ${socket.getUserData().instance}`);
 
-        // Increment the rate for the connection.
         connection.messageRate++;
 
-        // Reject the connection once we reach the rate limit threshold.
         if (connection.messageRate > config.messageLimit) return connection.reject('ratelimit');
 
         try {
-            // Convert the buffer into a string.
             let message = new TextDecoder().decode(data);
 
-            // Prevent duplicates in a short period of time.
             if (connection.isDuplicate(message)) return;
 
-            // Pass the parsed JSON onto the message handler.
             connection.messageCallback?.(JSON.parse(message));
         } catch (error) {
             log.error(`Message could not be parsed: ${new TextDecoder().decode(data)}.`);
@@ -103,17 +83,12 @@ export default class UWS extends WebSocket {
         }
     }
 
-    /**
-     * Handles closing the socket and removing our connection from the handler.
-     * @param socket The socket that we are closing (used to identify the connection).
-     */
     private handleClose(socket: WS<ConnectionInfo>): void {
         let connection = this.socketHandler.get(socket.getUserData().instance);
 
         if (!connection)
             return log.error(`No connection found closing ${socket.getUserData().instance}`);
 
-        // Mark the connection as closed to prevent any further messages from being sent.
         connection.closed = true;
 
         this.socketHandler.remove(connection.instance);
