@@ -9,30 +9,30 @@ import { App, DISABLED } from 'uws';
 
 import type SocketHandler from '../sockethandler';
 import type { HeaderWebSocket } from '../connection';
-import type { WebSocket as WS, HttpRequest, HttpResponse, us_socket_context_t, us_listen_socket } from 'uws';
+import type { WebSocket as WS, HttpRequest, HttpResponse, us_socket_context_t } from 'uws';
 import type { ConnectionInfo } from '@kaetram/common/types/network';
 
 export default class UWS extends WebSocket {
     public constructor(socketHandler: SocketHandler) {
         super(config.host, config.port, socketHandler);
 
-        (App({}) as any)
-            .get('/*', this.httpResponse.bind(this))
-            .ws('/*', {
-                compression: DISABLED,
-                idleTimeout: 15,
-                maxPayloadLength: 32 * 1024 * 1024,
+        const app = App({}) as any;
 
-                upgrade: this.handleUpgrade.bind(this),
-                open: this.handleConnection.bind(this),
-                message: this.handleMessage.bind(this),
-                close: this.handleClose.bind(this)
-            })
-            .listen(config.host, Number(config.port), (token: us_listen_socket) => {
-                if (!token) throw new Error(`Failed to listen on port ${config.port}`);
+        app.get('/*', this.httpResponse.bind(this));
+        app.ws('/*', {
+            compression: DISABLED,
+            idleTimeout: 15,
+            maxPayloadLength: 32 * 1024 * 1024,
+            upgrade: this.handleUpgrade.bind(this),
+            open: this.handleConnection.bind(this),
+            message: this.handleMessage.bind(this),
+            close: this.handleClose.bind(this)
+        });
+        app.listen(config.host, Number(config.port), (token: any) => {
+            if (!token) throw new Error(`Failed to listen on port ${config.port}`);
 
-                this.initializedCallback?.();
-            });
+            this.initializedCallback?.();
+        });
     }
 
     private handleUpgrade(

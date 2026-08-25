@@ -1358,9 +1358,9 @@ export default class Connection {
         let position = entity
             ? undefined
             : {
-                  x: info.x! * this.map.tileSize,
-                  y: info.y! * this.map.tileSize
-              };
+                x: info.x! * this.map.tileSize,
+                y: info.y! * this.map.tileSize
+            };
 
         // Create the bubble and assign its position.
         this.bubble.create(info.instance, info.text, info.duration, position);
@@ -1489,7 +1489,7 @@ export default class Connection {
     private handleFriends(opcode: Opcodes.Friends, info: FriendsPacketData): void {
         switch (opcode) {
             case Opcodes.Friends.List: {
-                this.game.player.loadFriends(info.friends!);
+                this.game.player.loadFriends((info as any).friends!);
                 break;
             }
 
@@ -1532,7 +1532,7 @@ export default class Connection {
      * Handles interface toggles from the server.
      */
 
-    private handleInterface(info: InterfacePacketData): void {
+    private handleInterface(info: any): void {
         let menu = this.menu.get(info.identifier);
 
         if (!menu) return;
@@ -1566,7 +1566,7 @@ export default class Connection {
 
         if (!resource) return;
 
-        resource.setExhausted(info.exhausted);
+        resource.setExhausted((info as any).exhausted);
     }
 
     /**
