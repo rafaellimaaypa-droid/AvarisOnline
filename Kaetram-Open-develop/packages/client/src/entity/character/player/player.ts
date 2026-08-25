@@ -102,7 +102,7 @@ export default class Player extends Character {
     }
 
     /**
-     * Loads the player based on the serialzied player
+     * Loads the player based on the serialized player
      * data sent from the server.
      * @param data Player data containing essentials.
      * @param sync Whether to sync the player.
@@ -116,10 +116,12 @@ export default class Player extends Character {
         this.orientation = data.orientation!;
         this.attackRange = data.attackRange!;
 
-        if (data.cash !== undefined) this.cash = data.cash;
-        if (data.customTag !== undefined) this.customTag = data.customTag;
-        if (data.xpBoostUntil !== undefined) this.xpBoostUntil = data.xpBoostUntil;
-        if (data.isPriority !== undefined) this.isPriority = data.isPriority;
+        const rawData = data as Record<string, any>;
+
+        if (rawData.cash !== undefined) this.cash = rawData.cash;
+        if (rawData.customTag !== undefined) this.customTag = rawData.customTag;
+        if (rawData.xpBoostUntil !== undefined) this.xpBoostUntil = rawData.xpBoostUntil;
+        if (rawData.isPriority !== undefined) this.isPriority = rawData.isPriority;
 
         if (data.displayInfo) this.nameColour = data.displayInfo.colour!;
 
@@ -500,7 +502,7 @@ export default class Player extends Character {
     }
 
     /**
-     * @returns Whether the player has the administrator rank (Exclusivo para o Mestre).
+     * @returns Whether the player has the administrator rank.
      */
 
     public override isAdmin(): boolean {
