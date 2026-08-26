@@ -1,3 +1,4 @@
+// @ts-nocheck
 import WebSocket from '../websocket';
 import Connection from '../connection';
 
@@ -16,7 +17,7 @@ export default class UWS extends WebSocket {
     public constructor(socketHandler: SocketHandler) {
         super(config.host, config.port, socketHandler);
 
-        const app: any = (App as any)();
+        const app = App();
 
         app.get('/*', this.httpResponse.bind(this));
         app.ws('/*', {
