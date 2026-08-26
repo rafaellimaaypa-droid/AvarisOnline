@@ -1,4 +1,4 @@
-// @ts-nocheck
+﻿// @ts-nocheck
 import WebSocket from '../websocket';
 import Connection from '../connection';
 
@@ -95,3 +95,4 @@ export default class UWS extends WebSocket {
         connection.handleClose();
     }
 }
+// Forced update at 2026-08-26 02:57:19
