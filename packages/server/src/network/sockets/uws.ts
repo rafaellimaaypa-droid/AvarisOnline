@@ -1,4 +1,3 @@
-// @ts-nocheck
 import WebSocket from '../websocket';
 import Connection from '../connection';
 
@@ -6,7 +5,9 @@ import log from '@kaetram/common/util/log';
 import config from '@kaetram/common/config';
 import Utils from '@kaetram/common/util/utils';
 import { Modules } from '@kaetram/common/network';
-import { App, DISABLED } from 'uws';
+
+// Carrega via CommonJS para o TypeScript ignorar completamente as tipagens quebradas do uws
+const uws = require('uws');
 
 import type SocketHandler from '../sockethandler';
 import type { HeaderWebSocket } from '../connection';
@@ -16,11 +17,11 @@ export default class UWS extends WebSocket {
     public constructor(socketHandler: SocketHandler) {
         super(config.host, config.port, socketHandler);
 
-        const app: any = App();
+        const app = uws.App();
 
         app.get('/*', this.httpResponse.bind(this));
         app.ws('/*', {
-            compression: DISABLED,
+            compression: uws.DISABLED,
             idleTimeout: 15,
             maxPayloadLength: 32 * 1024 * 1024,
             upgrade: this.handleUpgrade.bind(this),
@@ -28,7 +29,7 @@ export default class UWS extends WebSocket {
             message: this.handleMessage.bind(this),
             close: this.handleClose.bind(this)
         });
-        
+
         app.listen(config.host, Number(config.port), (token: any) => {
             if (!token) throw new Error(`Failed to listen on port ${config.port}`);
 
@@ -36,11 +37,7 @@ export default class UWS extends WebSocket {
         });
     }
 
-    private handleUpgrade(
-        response: any,
-        request: any,
-        context: any
-    ): void {
+    private handleUpgrade(response: any, request: any, context: any): void {
         response.upgrade(
             {
                 url: request.getUrl(),
