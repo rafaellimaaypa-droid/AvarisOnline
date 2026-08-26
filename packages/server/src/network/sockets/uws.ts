@@ -6,11 +6,14 @@ import log from '@kaetram/common/util/log';
 import config from '@kaetram/common/config';
 import Utils from '@kaetram/common/util/utils';
 import { Modules } from '@kaetram/common/network';
-import { App, DISABLED } from 'uws';
+
+// Carrega o uws via CommonJS para isolar 100% do TypeScript
+const uws = require('uws');
+const App = uws.App;
+const DISABLED = uws.DISABLED;
 
 import type SocketHandler from '../sockethandler';
 import type { HeaderWebSocket } from '../connection';
-import type { WebSocket as WS, HttpRequest, HttpResponse, us_socket_context_t } from 'uws';
 import type { ConnectionInfo } from '@kaetram/common/types/network';
 
 export default class UWS extends WebSocket {
@@ -36,11 +39,7 @@ export default class UWS extends WebSocket {
         });
     }
 
-    private handleUpgrade(
-        response: HttpResponse,
-        request: HttpRequest,
-        context: us_socket_context_t
-    ): void {
+    private handleUpgrade(response: any, request: any, context: any): void {
         response.upgrade(
             {
                 url: request.getUrl(),
@@ -53,7 +52,7 @@ export default class UWS extends WebSocket {
         );
     }
 
-    private handleConnection(socket: WS<ConnectionInfo>): void {
+    private handleConnection(socket: any): void {
         let instance = Utils.createInstance(Modules.EntityType.Player),
             connection = new Connection(instance, socket as HeaderWebSocket);
 
@@ -62,7 +61,7 @@ export default class UWS extends WebSocket {
         this.addCallback?.(connection);
     }
 
-    private handleMessage(socket: WS<ConnectionInfo>, data: ArrayBuffer): void {
+    private handleMessage(socket: any, data: ArrayBuffer): void {
         let connection = this.socketHandler.get(socket.getUserData().instance);
 
         if (!connection)
@@ -84,7 +83,7 @@ export default class UWS extends WebSocket {
         }
     }
 
-    private handleClose(socket: WS<ConnectionInfo>): void {
+    private handleClose(socket: any): void {
         let connection = this.socketHandler.get(socket.getUserData().instance);
 
         if (!connection)
