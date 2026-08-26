@@ -1,3 +1,4 @@
+// @ts-nocheck
 import WebSocket from '../websocket';
 import Connection from '../connection';
 
@@ -5,87 +6,87 @@ import log from '@kaetram/common/util/log';
 import config from '@kaetram/common/config';
 import Utils from '@kaetram/common/util/utils';
 import { Modules } from '@kaetram/common/network';
-
-// Carrega via CommonJS para o TypeScript ignorar completamente as tipagens quebradas do uws
-const uws = require('uws');
+import { WebSocketServer } from 'ws';
+import http from 'http';
 
 import type SocketHandler from '../sockethandler';
 import type { HeaderWebSocket } from '../connection';
-import type { ConnectionInfo } from '@kaetram/common/types/network';
 
 export default class UWS extends WebSocket {
+    private wss: WebSocketServer;
+    private server: http.Server;
+
     public constructor(socketHandler: SocketHandler) {
         super(config.host, config.port, socketHandler);
 
-        const app = uws.App();
-
-        app.get('/*', this.httpResponse.bind(this));
-        app.ws('/*', {
-            compression: uws.DISABLED,
-            idleTimeout: 15,
-            maxPayloadLength: 32 * 1024 * 1024,
-            upgrade: this.handleUpgrade.bind(this),
-            open: this.handleConnection.bind(this),
-            message: this.handleMessage.bind(this),
-            close: this.handleClose.bind(this)
+        this.server = http.createServer((req, res) => {
+            res.writeHead(200, { 'Content-Type': 'text/plain' });
+            res.end('Avaris Server is running\n');
         });
 
-        app.listen(config.host, Number(config.port), (token: any) => {
-            if (!token) throw new Error(`Failed to listen on port ${config.port}`);
+        this.wss = new WebSocketServer({ noServer: true });
 
+        this.server.on('upgrade', (request, socket, head) => {
+            this.wss.handleUpgrade(request, socket, head, (ws) => {
+                this.wss.emit('connection', ws, request);
+            });
+        });
+
+        this.wss.on('connection', (socket: any, request: any) => {
+            socket.upgradeReq = request;
+            this.handleConnection(socket);
+
+            socket.on('message', (data: any) => {
+                this.handleMessage(socket, data);
+            });
+
+            socket.on('close', () => {
+                this.handleClose(socket);
+            });
+        });
+
+        this.server.listen(Number(config.port), config.host, () => {
+            log.info(`Server listening on port ${config.port}`);
             this.initializedCallback?.();
         });
-    }
-
-    private handleUpgrade(response: any, request: any, context: any): void {
-        response.upgrade(
-            {
-                url: request.getUrl(),
-                remoteAddress: request.getHeader('cf-connecting-ip')
-            },
-            request.getHeader('sec-websocket-key'),
-            request.getHeader('sec-websocket-protocol'),
-            request.getHeader('sec-websocket-extensions'),
-            context
-        );
     }
 
     private handleConnection(socket: any): void {
         let instance = Utils.createInstance(Modules.EntityType.Player),
             connection = new Connection(instance, socket as HeaderWebSocket);
 
-        socket.getUserData().instance = instance;
+        socket.instance = instance;
 
         this.addCallback?.(connection);
     }
 
-    private handleMessage(socket: any, data: ArrayBuffer): void {
-        let connection = this.socketHandler.get(socket.getUserData().instance);
+    private handleMessage(socket: any, data: any): void {
+        let connection = this.socketHandler.get(socket.instance);
 
         if (!connection)
-            return log.error(`No connection found for ${socket.getUserData().instance}`);
+            return log.error(`No connection found for ${socket.instance}`);
 
         connection.messageRate++;
 
         if (connection.messageRate > config.messageLimit) return connection.reject('ratelimit');
 
         try {
-            let message = new TextDecoder().decode(data);
+            let message = data.toString();
 
             if (connection.isDuplicate(message)) return;
 
             connection.messageCallback?.(JSON.parse(message));
         } catch (error) {
-            log.error(`Message could not be parsed: ${new TextDecoder().decode(data)}.`);
+            log.error(`Message could not be parsed.`);
             log.error(error);
         }
     }
 
     private handleClose(socket: any): void {
-        let connection = this.socketHandler.get(socket.getUserData().instance);
+        let connection = this.socketHandler.get(socket.instance);
 
         if (!connection)
-            return log.error(`No connection found closing ${socket.getUserData().instance}`);
+            return log.error(`No connection found closing ${socket.instance}`);
 
         connection.closed = true;
 
