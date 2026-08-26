@@ -1,0 +1,9 @@
+﻿services:
+  - type: web
+    name: avaris-online-server
+    env: node
+    buildCommand: corepack enable && yarn install && yarn workspace @kaetram/server build
+    startCommand: yarn workspace @kaetram/server start
+    envVars:
+      - key: NODE_ENV
+        value: production
