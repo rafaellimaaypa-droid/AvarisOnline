@@ -1,23 +1,14 @@
-// @ts-nocheck
-import WebSocket from '../websocket';
-import Connection from '../connection';
+const WebSocket = require('../websocket').default;
+const Connection = require('../connection').default;
 
-import log from '@kaetram/common/util/log';
-import config from '@kaetram/common/config';
-import Utils from '@kaetram/common/util/utils';
-import { Modules } from '@kaetram/common/network';
+const log = require('@kaetram/common/util/log').default;
+const config = require('@kaetram/common/config').default;
+const Utils = require('@kaetram/common/util/utils').default;
+const { Modules } = require('@kaetram/common/network');
+const { App, DISABLED } = require('uws');
 
-// Carrega o uws via CommonJS para isolar 100% do TypeScript
-const uws = require('uws');
-const App = uws.App;
-const DISABLED = uws.DISABLED;
-
-import type SocketHandler from '../sockethandler';
-import type { HeaderWebSocket } from '../connection';
-import type { ConnectionInfo } from '@kaetram/common/types/network';
-
-export default class UWS extends WebSocket {
-    public constructor(socketHandler: SocketHandler) {
+module.exports = class UWS extends WebSocket {
+    constructor(socketHandler) {
         super(config.host, config.port, socketHandler);
 
         const app = App();
@@ -32,14 +23,14 @@ export default class UWS extends WebSocket {
             message: this.handleMessage.bind(this),
             close: this.handleClose.bind(this)
         });
-        app.listen(config.host, Number(config.port), (token: any) => {
+        app.listen(config.host, Number(config.port), (token) => {
             if (!token) throw new Error(`Failed to listen on port ${config.port}`);
 
-            this.initializedCallback?.();
+            if (this.initializedCallback) this.initializedCallback();
         });
     }
 
-    private handleUpgrade(response: any, request: any, context: any): void {
+    handleUpgrade(response, request, context) {
         response.upgrade(
             {
                 url: request.getUrl(),
@@ -52,16 +43,16 @@ export default class UWS extends WebSocket {
         );
     }
 
-    private handleConnection(socket: any): void {
+    handleConnection(socket) {
         let instance = Utils.createInstance(Modules.EntityType.Player),
-            connection = new Connection(instance, socket as HeaderWebSocket);
+            connection = new Connection(instance, socket);
 
         socket.getUserData().instance = instance;
 
-        this.addCallback?.(connection);
+        if (this.addCallback) this.addCallback(connection);
     }
 
-    private handleMessage(socket: any, data: ArrayBuffer): void {
+    handleMessage(socket, data) {
         let connection = this.socketHandler.get(socket.getUserData().instance);
 
         if (!connection)
@@ -76,14 +67,14 @@ export default class UWS extends WebSocket {
 
             if (connection.isDuplicate(message)) return;
 
-            connection.messageCallback?.(JSON.parse(message));
+            if (connection.messageCallback) connection.messageCallback(JSON.parse(message));
         } catch (error) {
             log.error(`Message could not be parsed: ${new TextDecoder().decode(data)}.`);
             log.error(error);
         }
     }
 
-    private handleClose(socket: any): void {
+    handleClose(socket) {
         let connection = this.socketHandler.get(socket.getUserData().instance);
 
         if (!connection)
@@ -95,4 +86,4 @@ export default class UWS extends WebSocket {
 
         connection.handleClose();
     }
-}
+};
