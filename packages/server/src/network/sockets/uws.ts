@@ -16,7 +16,7 @@ export default class UWS extends WebSocket {
     public constructor(socketHandler: SocketHandler) {
         super(config.host, config.port, socketHandler);
 
-        const app = App({}) as any;
+        const app = (App as any)();
 
         app.get('/*', this.httpResponse.bind(this));
         app.ws('/*', {
