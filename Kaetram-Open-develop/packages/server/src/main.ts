@@ -23,6 +23,11 @@ class Main {
     public constructor(private params: string[] = process.argv) {
         if (!this.handleLicensing()) return;
 
+        // Força a porta a ler a variável de ambiente do Railway ou usa o padrão do config
+        if (process.env.PORT) {
+            config.port = Number(process.env.PORT);
+        }
+
         log.info(`Initializing ${config.name} game engine...`);
 
         this.socketHandler.onConnection(this.handleConnection.bind(this));
