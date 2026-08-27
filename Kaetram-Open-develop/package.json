@@ -13,7 +13,7 @@
         "packages": "FORCE_COLOR=true yarn workspaces foreach --no-private -j 4 -piv run",
         "dev": "yarn packages dev",
         "hub": "yarn packages hub",
-        "start": "yarn packages start",
+        "start": "yarn workspace @kaetram/server start",
         "build": "yarn packages build",
         "lint:script": "eslint --cache packages/**/*.{ts,astro} --ignore-path .gitignore",
         "lint:style": "stylelint --cache packages/**/*.{scss,astro} --ignore-path .gitignore",
