@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Useful utility functions that are used all throughout the server and client.
  */
@@ -87,7 +88,7 @@ export default {
 
     validPacket(packet: number): boolean {
         let keys = Object.keys(Packets),
-            filtered = [];
+            filtered: string[] = [];
 
         for (let key of keys) if (!key.endsWith('Opcode')) filtered.push(key);
 

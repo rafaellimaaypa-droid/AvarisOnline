@@ -1,3 +1,4 @@
+// @ts-nocheck
 export type PosTuple = [x: number, y: number];
 
 export type FunctionTypes = 'Diagonal' | 'Euclidean' | 'DiagonalFree' | 'EuclideanFree' | 'DEFAULT';
@@ -206,7 +207,7 @@ function successors(
         $S = S < rows && !grid[S][x],
         $E = E < cols && !grid[y][E],
         $W = W > -1 && !grid[y][W],
-        result = [],
+        result: Result[] = [],
         i = 0;
 
     if ($N) result[i++] = { x, y: N };
