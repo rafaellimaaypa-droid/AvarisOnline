@@ -111,6 +111,11 @@ for (let key in envConfig) {
     config[camelCaseKey] = envConfig[key] as never;
 }
 
+// Força a porta dinamicamente caso o ambiente forneça a variável PORT (Railway)
+if (process.env.PORT) {
+    config.port = Number(process.env.PORT);
+}
+
 config.hubHost ||= config.host;
 config.hubWsHost ||= config.hubHost;
 config.adminHost ||= config.hubHost;
