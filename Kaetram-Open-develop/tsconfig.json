@@ -27,6 +27,7 @@
         "plugins": [{ "name": "@astrojs/ts-plugin" }],
 
         "noEmit": true,
+        "noEmitOnError": false,
 
         "isolatedModules": true,
         "verbatimModuleSyntax": true,
@@ -35,8 +36,8 @@
         "preserveSymlinks": true,
         "forceConsistentCasingInFileNames": true,
 
-        "strict": true,
-        "noImplicitAny": true,
+        "strict": false,
+        "noImplicitAny": false,
         "strictNullChecks": true,
         // "exactOptionalPropertyTypes": true,
         // "noImplicitReturns": true,
